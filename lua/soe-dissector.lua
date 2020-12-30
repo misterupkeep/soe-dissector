@@ -60,7 +60,7 @@ connection_id = ProtoField.uint32("soe.connection_id", "connectionId", base.HEX)
 client_udp_size = ProtoField.uint32("soe.client_udp_size", "clientUdpSize", base.DEC)
 -- This seems to be a constant footer in client reqs in the packet logs I have
 -- Probably protocol version. Panic if it isn't CGAPI_527 (since this dissector probably breaks).
-cgapi_527_string = ProtoField.stringz("soe.cgapi_527_string" ,"cgApi527String", base.ASCII)
+protocol_version_string = ProtoField.stringz("soe.protocol_version_string" ,"protocolVersionString", base.ASCII)
 
 --------------------------
 --   SOE_SESSION_REPLY  --
@@ -107,7 +107,7 @@ payload_size = ProtoField.uint8("soe.payload_size", "payloadLength", base.HEX)
 
 soe_protocol.fields = {
     packet_type, -- Header
-    crc_length, connection_id, client_udp_size, cgapi_527_string, -- Session Request
+    crc_length, connection_id, client_udp_size, protocol_version_string, -- Session Request
     crc_seed, crc_length_byte, use_compression, use_encryption, server_udp_size, stray_uint32, -- Session Reply
     sequence_number, game_data, deflated_data, -- Channel Data
     fragmented_game_data, -- Fragmented Packets
@@ -130,7 +130,7 @@ function soe_session_request(buffer, subtree)
     subtree:add(crc_length,       buffer(2,4))
     subtree:add(connection_id,    buffer(6,4))
     subtree:add(client_udp_size,  buffer(10,4))
-    subtree:add(cgapi_527_string, buffer(14))
+    subtree:add(protocol_version_string, buffer(14))
 end
 
 function soe_session_reply(buffer, subtree)
