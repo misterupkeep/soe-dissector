@@ -120,6 +120,7 @@ string.starts_with = function(self, prefix)
 end
 
 -- Try decompressing
+zlib = require('zlib')
 function inflate(input)
     local byte_array = input:bytes(3) -- Skip opcode and zflag
     byte_array:set_size(byte_array:len() - 2) -- Skip CRC footer; NOTE: ocassionally 3
