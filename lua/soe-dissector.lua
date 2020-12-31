@@ -251,9 +251,6 @@ function parse_packet(buffer, subtree, _recursive)
 end
 
 function soe_protocol.dissector(buffer, pinfo, tree)
-    length = buffer:len()
-    if length == 0 then return end
-
     pinfo.cols.protocol = soe_protocol.name
 
     local subtree = tree:add(soe_protocol, buffer(), "SOE Reliable UDP Protocol")
