@@ -58,8 +58,7 @@ packet_type = ProtoField.uint16(
 crc_length = ProtoField.uint32("soe.crc_length", "crcLength", base.DEC)
 connection_id = ProtoField.uint32("soe.connection_id", "connectionId", base.HEX)
 client_udp_size = ProtoField.uint32("soe.client_udp_size", "clientUdpSize", base.DEC)
--- This seems to be a constant footer in client reqs in the packet logs I have
--- Probably protocol version. Panic if it isn't CGAPI_527 (since this dissector probably breaks).
+-- Panic if not CGAPI_527 (since this dissector probably breaks).
 protocol_version_string = ProtoField.stringz("soe.protocol_version_string" ,"protocolVersionString", base.ASCII)
 
 --------------------------
@@ -86,18 +85,11 @@ game_data = ProtoField.bytes("soe.game_data", "gameData")
 ---------------------
 -- SOE_DATA_FRAG_A --
 ---------------------
-fragmented_game_data = ProtoField.bytes("soe.fragmented_game_data", "fragmentedGameData")
+-- TODO: Figure out how stream reconstruction works
 
--------------------------
--- SOE_OUT_ORDER_PKT_A --
--------------------------
--- sequence_number goes here
-
----------------
--- SOE_ACK_A --
----------------
--- use_compression goes here
--- sequence_number goes here
+-------------------------------------
+-- SOE_ACK_A / SOE_OUT_ORDER_PKT_A --
+-------------------------------------
 crc_footer = ProtoField.bytes("soe.crc_footer", "crcFooter")
 
 -------------------
@@ -110,7 +102,6 @@ soe_protocol.fields = {
     crc_length, connection_id, client_udp_size, protocol_version_string, -- Session Request
     crc_seed, crc_length_byte, use_compression, use_encryption, server_udp_size, stray_uint32, -- Session Reply
     sequence_number, game_data, deflated_data, -- Channel Data
-    fragmented_game_data, -- Fragmented Packets
     crc_footer, -- Acknowledge Packets
     payload_size, -- Grouped Packets
 }
@@ -166,6 +157,7 @@ function soe_data_packet(buffer, subtree, opcode, _recursive)
     local final_data -- uses_compression ? inflated_bytes : (buffer + 3)
     local final_tree -- uses_compression ? inflated_data_subtree : subtree
     if uses_compression then
+	subtree:add(deflated_data, buffer(3, buffer:len() - 5))
 	final_data = ByteArray.new(inflate(buffer), true):tvb(tab_name)
 	final_tree = subtree:add(final_data(), tab_name)
     else
